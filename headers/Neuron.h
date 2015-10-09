@@ -5,6 +5,7 @@ class Neuron {
 private:
 	double * values;
 public:
+	Neuron();
 	Neuron(double * values);
 };
 

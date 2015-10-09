@@ -1,24 +1,23 @@
-//============================================================================
-// Name        : SeriesPrediction.cpp
-// Author      : 
-// Version     :
-// Copyright   : Your copyright notice
-// Description : Hello World in C++, Ansi-style
-//============================================================================
-
 #include <iostream>
 #include "../headers/RecurrentNetwork.h"
+#include "../headers/FunctionService.h"
 
 using namespace std;
 
 int main() {
 
-	double ** inputImages = new double*[10];
+	int p = 3;
+	int m = 10;
+	double minError = 0.01;
 
-	for (int i=0; i < 10; i++) {
-		inputImages[i] = new double[10];
+	int seqSize = m + p - 1;
+
+	int * sequence = FunctionService::getFibonacciSequence(seqSize);
+
+	for (int i=0; i<seqSize; i++) {
+		cout << sequence[i] << endl;
 	}
 
-	RecurrentNetwork network(inputImages, 10);
+	RecurrentNetwork * network = new RecurrentNetwork(sequence, p, m, minError);
 	return 0;
 }
