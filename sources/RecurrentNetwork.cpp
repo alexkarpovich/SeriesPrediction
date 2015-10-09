@@ -1,5 +1,5 @@
 #include "../headers/RecurrentNetwork.h"
 
-RecurrentNetwork::RecurrentNetwork() {
+RecurrentNetwork::RecurrentNetwork(double ** inputImages, int p) {
 
 }

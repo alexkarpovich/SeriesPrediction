@@ -8,8 +8,12 @@ private:
 	Neuron * inputLayer;
 	Neuron * hiddenLayer;
 	Neuron * outputLayer;
+	Neuron * context;
+	double ** inputWeights;
+	double ** contextWeights;
+	double ** outputWeights;
 public:
-	RecurrentNetwork();
+	RecurrentNetwork(double ** inputImages, int p);
 };
 
 #endif /* RECURRENTNETWORK_H_ */

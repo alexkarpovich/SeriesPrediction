@@ -12,6 +12,13 @@
 using namespace std;
 
 int main() {
-	RecurrentNetwork network;
+
+	double ** inputImages = new double*[10];
+
+	for (int i=0; i < 10; i++) {
+		inputImages[i] = new double[10];
+	}
+
+	RecurrentNetwork network(inputImages, 10);
 	return 0;
 }
