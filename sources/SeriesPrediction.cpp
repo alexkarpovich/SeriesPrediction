@@ -12,11 +12,14 @@ int main() {
 
 	int seqSize = m + p - 1;
 
-	int * sequence = FunctionService::getFibonacciSequence(seqSize);
+	double * sequence = FunctionService::getFibonacciSequence(seqSize);
+
+	cout << "Analysing sequence: " << endl;
 
 	for (int i=0; i<seqSize; i++) {
-		cout << sequence[i] << endl;
+		cout << sequence[i] << " ";
 	}
+	cout << endl;
 
 	RecurrentNetwork * network = new RecurrentNetwork(sequence, p, m, minError);
 	return 0;

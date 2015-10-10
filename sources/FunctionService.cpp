@@ -1,6 +1,10 @@
 #include "../headers/FunctionService.h"
 
-int FunctionService::fibonacci(int n) {
+double FunctionService::getRandom(int min, int max) {
+	return (max - min) * ( (double)rand() / (double)RAND_MAX ) + min;
+}
+
+double FunctionService::fibonacci(double n) {
 	if (n < 3) {
 		return 1;
 	}
@@ -8,7 +12,7 @@ int FunctionService::fibonacci(int n) {
 	return FunctionService::fibonacci(n-1) + FunctionService::fibonacci(n-2);
 }
 
-int FunctionService::factorial(int n) {
+double FunctionService::factorial(double n) {
 	if (n < 2) {
 		return n;
 	}
@@ -16,8 +20,8 @@ int FunctionService::factorial(int n) {
 	return n * FunctionService::factorial(n-1);
 }
 
-int * FunctionService::getFibonacciSequence(int n) {
-	int * fibonacciSeq = new int[n];
+double * FunctionService::getFibonacciSequence(int n) {
+	double * fibonacciSeq = new double[n];
 
 	for (int i=0; i<n; i++) {
 		fibonacciSeq[i] = FunctionService::fibonacci(i+1);
@@ -26,8 +30,8 @@ int * FunctionService::getFibonacciSequence(int n) {
 	return fibonacciSeq;
 }
 
-int * FunctionService::getFactorialSequence(int n) {
-	int * factorialSeq = new int[n];
+double * FunctionService::getFactorialSequence(int n) {
+	double * factorialSeq = new double[n];
 
 	for (int i=0; i<n; i++) {
 		factorialSeq[i] = FunctionService::factorial(i+1);
