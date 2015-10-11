@@ -5,6 +5,8 @@
 
 
 RecurrentNetwork::RecurrentNetwork(double * sequence, int inCount, int hidCount, int L, double minError) {
+	cout << "Recurrent Network:" << endl;
+
 	this->inCount = inCount;
 	this->hidCount = hidCount;
 	this->conCount = hidCount;
@@ -190,6 +192,7 @@ void RecurrentNetwork::training() {
 
 		for (int i = 0; i < this->L; i++) {
 			this->inputs = this->trainingSample[i];
+			this->target = this->trainingSample[i];
 
 			this->feedforward();
 
