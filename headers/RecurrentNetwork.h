@@ -15,6 +15,7 @@ private:
 	int L;
 	int size;
 	double minError;
+	double learnRate;
 
 	double ** trainingSample;
 
@@ -36,9 +37,11 @@ private:
 	void prepareLayers();
 	void prepareWeights();
 	void initWeights();
-	void feedForward();
-	void backPropagation();
+	void feedforward();
+	void backpropagation();
+	double error();
 	double activate(double S);
+	double derivative(double y);
 public:
 	RecurrentNetwork(double * sequence, int inCount, int hidCount, int L, double minError);
 	void training();
