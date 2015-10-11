@@ -9,24 +9,38 @@ using namespace std;
 
 class RecurrentNetwork {
 private:
-	int p;
-	int m;
+	int inCount;
+	int hidCount;
+	int conCount;
+	int L;
 	int size;
 	double minError;
-	Neuron ** inputLayer;
-	Neuron ** hiddenLayer;
-	Neuron ** outputLayer;
-	Neuron ** context;
-	double ** inputWeights;
-	double ** contextWeights;
-	double * outputWeights;
 
-	void prepareInputLayer(double * sequence);
+	double ** trainingSample;
+
+	double * inputs;
+	double * hidden;
+	double * context;
+	double * output;
+	double * target;
+	double * actual;
+
+	double ** ihWeights;
+	double ** chWeights;
+	double ** hoWeights;
+
+	double * oError;
+	double * hError;
+
+	void prepareTrainingSample(double * sequence);
 	void prepareLayers();
 	void prepareWeights();
 	void initWeights();
+	void feedForward();
+	void backPropagation();
+	double activate(double S);
 public:
-	RecurrentNetwork(double * sequence, int p, int m, double minError);
+	RecurrentNetwork(double * sequence, int inCount, int hidCount, int L, double minError);
 	void training();
 	double * process();
 };
