@@ -11,7 +11,6 @@ class RecurrentNetwork {
 private:
 	int inCount;
 	int hidCount;
-	int conCount;
 	int L;
 	int size;
 	double minError;
@@ -33,7 +32,7 @@ private:
 	double * oError;
 	double * hError;
 
-	void prepareTrainingSample(double * sequence);
+	void prepareTrainingSample(double * sequence, int sequenceSize);
 	void prepareLayers();
 	void prepareWeights();
 	void initWeights();
@@ -43,9 +42,9 @@ private:
 	double activate(double S);
 	double derivative(double y);
 public:
-	RecurrentNetwork(double * sequence, int inCount, int hidCount, int L, double minError);
+	RecurrentNetwork(double * sequence, int sequenceSize, int inCount, int hidCount, double minError);
 	void training();
-	double * process();
+	double * process(int predictCount);
 };
 
 #endif /* RECURRENTNETWORK_H_ */

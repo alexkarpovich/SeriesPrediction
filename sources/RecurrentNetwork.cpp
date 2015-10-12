@@ -4,89 +4,86 @@
 #include "../headers/RecurrentNetwork.h"
 
 
-RecurrentNetwork::RecurrentNetwork(double * sequence, int inCount, int hidCount, int L, double minError) {
-	cout << "Recurrent Network:" << endl;
-
+RecurrentNetwork::RecurrentNetwork(double * sequence, int sequenceSize, int inCount, int hidCount, double minError) {
 	this->inCount = inCount;
 	this->hidCount = hidCount;
-	this->conCount = hidCount;
-	this->L = L;
-	this->size = this->inCount + this->L;
 	this->minError = minError;
 	this->learnRate = 0.2;
 
-	this->prepareTrainingSample(sequence);
-	this->prepareLayers();
-	this->prepareWeights();
-	this->initWeights();
+	prepareTrainingSample(sequence, sequenceSize);
+	prepareLayers();
+	prepareWeights();
+	initWeights();
 }
 
-void RecurrentNetwork::prepareTrainingSample(double * sequence) {
+void RecurrentNetwork::prepareTrainingSample(double * sequence, int sequenceSize) {
 	cout << "- Prepare training sample";
 
-	this->trainingSample = new double*[this->L];
-	for (int i = 0; i < this->L; i++) {
-		this->trainingSample[i] = new double[this->inCount];
+	L = sequenceSize - inCount + 1;
 
-		memcpy(this->trainingSample[i], sequence + i, this->inCount * sizeof(double));
+	trainingSample = new double*[L];
+	for (int i = 0; i < L; i++) {
+		trainingSample[i] = new double[inCount];
+
+		memcpy(trainingSample[i], sequence + i, inCount * sizeof(double));
 	}
 
 	cout << " [ DONE ]" << endl;
 }
 
 void RecurrentNetwork::prepareLayers() {
-	this->hidden = new double[this->hidCount + 1];
-	this->context = new double[this->hidCount + 1];
-	this->actual = new double[this->inCount + 1];
-	this->target = new double[this->inCount + 1];
+	hidden = new double[hidCount + 1];
+	context = new double[hidCount + inCount + 1];
+	actual = new double[inCount + 1];
+	target = new double[inCount + 1];
 
-	this->oError = new double[this->inCount];
-	this->hError = new double[this->hidCount];
+	oError = new double[inCount];
+	hError = new double[hidCount];
 }
 
 void RecurrentNetwork::prepareWeights() {
 	cout << "- Prepare weights";
 
-	int iwSize = this->inCount + 1;
-	int cwSize = this->conCount + 1;
-	int owSize = this->hidCount + 1;
+	int iwSize = inCount + 1;
+	int cwSize = hidCount + inCount + 1;
+	int owSize = hidCount + 1;
 
-	this->ihWeights = new double*[iwSize];
+	ihWeights = new double*[iwSize];
 	for (int i = 0; i < iwSize; i++) {
-		this->ihWeights[i] = new double[this->hidCount];
+		ihWeights[i] = new double[hidCount];
 	}
 
-	this->chWeights = new double*[cwSize];
+	chWeights = new double*[cwSize];
 	for (int i = 0; i < cwSize; i++) {
-		this->chWeights[i] = new double[this->hidCount];
+		chWeights[i] = new double[hidCount];
 	}
 
-	this->hoWeights = new double*[owSize];
+	hoWeights = new double*[owSize];
 	for (int i = 0; i < owSize; i++) {
-		this->hoWeights[i] = new double[this->inCount];
+		hoWeights[i] = new double[inCount];
 	}
 }
 
 void RecurrentNetwork::initWeights() {
-	int iwSize = this->inCount + 1;
-	int cwSize = this->conCount + 1;
-	int owSize = this->hidCount + 1;
+	int iwSize = inCount + 1;
+	int cwSize = hidCount + inCount + 1;
+	int owSize = hidCount + 1;
 
 	for (int i = 0; i < iwSize; i++) {
-		for (int j = 0; j < this->hidCount; j++) {
-			this->ihWeights[i][j] = FunctionService::getRandom(-1, 1);
+		for (int j = 0; j < hidCount; j++) {
+			ihWeights[i][j] = FunctionService::getRandom(-1, 1);
 		}
 	}
 
 	for (int i = 0; i < cwSize; i++) {
-		for (int j = 0; j < this->hidCount; j++) {
-			this->chWeights[i][j] = 0;
+		for (int j = 0; j < hidCount; j++) {
+			chWeights[i][j] = 1;
 		}
 	}
 
 	for (int i = 0; i < owSize; i++) {
-		for (int j = 0; j < this->inCount; j++) {
-			this->hoWeights[i][j] = FunctionService::getRandom(-1, 1);
+		for (int j = 0; j < inCount; j++) {
+			hoWeights[i][j] = FunctionService::getRandom(-1, 1);
 		}
 	}
 
@@ -95,79 +92,84 @@ void RecurrentNetwork::initWeights() {
 
 void RecurrentNetwork::feedforward() {
 	double S = 0;
+	int conCount = hidCount + inCount + 1;
 
-	for (int j = 0; j < this->hidCount; j++) {
-		for (int i = 0; i < this->inCount; i++) {
-			S += this->ihWeights[i][j] * this->inputs[i];
+	for (int j = 0; j < hidCount; j++) {
+		for (int i = 0; i < inCount; i++) {
+			S += ihWeights[i][j] * inputs[i];
 		}
 
-		for (int i = 0; i < this->conCount; i++) {
-			S += this->chWeights[i][j] * this->context[i];
+		for (int i = 0; i < conCount; i++) {
+			S += chWeights[i][j] * context[i];
 		}
 
 		// Add bias
-		S += this->ihWeights[this->inCount][j];
-		S += this->chWeights[this->conCount][j];
+		S += ihWeights[inCount][j];
+		S += chWeights[conCount - 1][j];
 
-		this->hidden[j] = this->activate(S);
+		hidden[j] = activate(S);
 	}
 
-	for (int i = 0; i < this->inCount; i++) {
+	for (int i = 0; i < inCount; i++) {
 		S = 0.0;
 
-		for (int j = 0; j < this->hidCount; j++) {
-			S += this->hoWeights[j][i] * this->hidden[j];
+		for (int j = 0; j < hidCount; j++) {
+			S += hoWeights[j][i] * hidden[j];
 		}
 
-		S += this->hoWeights[this->hidCount][i];
+		S += hoWeights[hidCount][i];
 
-		this->actual[i] = this->activate(S);
+		actual[i] = activate(S);
 	}
 
-	for (int i = 0; i < this->hidCount; i++) {
-		this->context[i] = this->hidden[i];
+	for (int i = 0; i < hidCount; i++) {
+		context[i] = hidden[i];
+	}
+
+	for (int i = 0; i < inCount; i++) {
+		context[i + i] = actual[i];
 	}
 }
 
 double RecurrentNetwork::error() {
 	double err = 0;
 
-	for (int i = 0; i < this->inCount; i++) {
-		err += pow(this->target[i] - this->actual[i], 2);
+	for (int i = 0; i < inCount; i++) {
+		err += pow(target[i] - actual[i], 2);
 	}
 
 	return err;
 }
 
 void RecurrentNetwork::backpropagation() {
-	for (int i = 0; i < this->inCount; i++) {
-		this->oError[i] = (this->target[i] - this->actual[i]) * this->derivative(this->actual[i]);
+	for (int i = 0; i < inCount; i++) {
+		oError[i] = (target[i] - actual[i]) * derivative(actual[i]);
 	}
 
-	for (int i = 0; i < this->hidCount; i++) {
-		this->hError[i] = 0;
+	for (int i = 0; i < hidCount; i++) {
+		hError[i] = 0;
 
-		for (int j = 0; j < this->inCount; j++) {
-			this->hError[i] += this->oError[j] * this->hoWeights[i][j];
+		for (int j = 0; j < inCount; j++) {
+			hError[i] += oError[j] * hoWeights[i][j];
 		}
 
-		this->hError[i] *= this->derivative(this->hidden[i]);
+		hError[i] *= derivative(hidden[i]);
 	}
 
-	for (int j = 0; j < this->inCount; j++) {
-		for (int i = 0; i < this->hidCount; i++) {
-			this->hoWeights[i][j] += this->learnRate * this->oError[j] * this->hidden[i];
+	for (int j = 0; j < inCount; j++) {
+		for (int i = 0; i < hidCount; i++) {
+			hoWeights[i][j] += learnRate * oError[j] * hidden[i];
 		}
 
-		this->hoWeights[this->hidCount][j] += this->learnRate * this->oError[j];
+		hoWeights[hidCount][j] += learnRate * oError[j];
 	}
 
-	for (int j = 0; j < this->hidCount; j++) {
-		for (int i = 0; i < this->inCount; i++) {
-			this->ihWeights[i][j] += this->learnRate * this->hError[j] * this->inputs[i];
+	for (int j = 0; j < hidCount; j++) {
+		for (int i = 0; i < inCount; i++) {
+			ihWeights[i][j] += learnRate * hError[j] * inputs[i];
 		}
 
-		this->ihWeights[this->inCount][j] += this->learnRate * this->hError[j];
+		ihWeights[inCount][j] += learnRate * hError[j];
 	}
 }
 
@@ -176,7 +178,7 @@ double RecurrentNetwork::activate(double S) {
 }
 
 double RecurrentNetwork::derivative(double y) {
-	return (1 + y / (y * y + 1)) / (y + sqrt(y * y + 1));
+	return 1 / sqrt(y * y + 1);
 }
 
 void RecurrentNetwork::training() {
@@ -190,22 +192,36 @@ void RecurrentNetwork::training() {
 		e = 0;
 		++iteration;
 
-		for (int i = 0; i < this->L; i++) {
-			this->inputs = this->trainingSample[i];
-			this->target = this->trainingSample[i];
+		for (int i = 0; i < L - 1; i++) {
+			inputs = trainingSample[i];
+			target = trainingSample[i + 1];
 
-			this->feedforward();
+			feedforward();
 
-			e += this->error();
+			e += error();
+			e /= 2;
 
-			this->backpropagation();
+			backpropagation();
 		}
 
-		cout << "[ " << iteration << " ] E = " << e << endl;
+		cout << "[ " << iteration << " ] E = " << e << ", actual: [ ";
+		for (int i = 0; i < inCount; i++) {
+			cout << actual[i] << " ";
+		}
+		cout << "]" << endl;
 
-	} while (iteration < 1000);
+	} while (iteration < 1000000);
 }
 
-double * RecurrentNetwork::process() {
+double * RecurrentNetwork::process(int predictCount) {
+	int iteration = 0;
+	double * predictedSequence = new double[predictCount];
 
+	do {
+		++iteration;
+
+
+	} while (iteration < predictCount);
+
+	return predictedSequence;
 }

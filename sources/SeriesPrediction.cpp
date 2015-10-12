@@ -6,22 +6,23 @@ using namespace std;
 
 int main() {
 
-	int p = 3;
-	int L = 10;
+	int imageSize = 3;
+	int hiddenSize = 4;
+	int sequenceSize = 15;
 	double minError = 0.01;
 
-	int seqSize = L + p - 1;
-
-	double * sequence = FunctionService::getFibonacciSequence(seqSize);
+	double * sequence = FunctionService::getFibonacciSequence(sequenceSize);
 
 	cout << "Analysing sequence: " << endl;
 
-	for (int i = 0; i < seqSize; i++) {
+	for (int i = 0; i < sequenceSize; i++) {
 		cout << sequence[i] << " ";
 	}
 	cout << endl;
 
-	RecurrentNetwork * network = new RecurrentNetwork(sequence, p, 5, L, minError);
+	cout << "Recurrent Network" << endl;
+
+	RecurrentNetwork * network = new RecurrentNetwork(sequence, sequenceSize, imageSize, hiddenSize, minError);
 	network->training();
 
 	return 0;
