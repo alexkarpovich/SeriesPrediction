@@ -8,7 +8,7 @@ int main() {
 
 	int imageSize = 3;
 	int hiddenSize = 4;
-	int sequenceSize = 15;
+	int sequenceSize = 6;
 	double minError = 0.01;
 
 	double * sequence = FunctionService::getFibonacciSequence(sequenceSize);

@@ -1,7 +1,6 @@
 #ifndef RECURRENTNETWORK_H_
 #define RECURRENTNETWORK_H_
 
-#include "Neuron.h"
 #include "FunctionService.h"
 #include <iostream>
 
@@ -21,26 +20,24 @@ private:
 	double * inputs;
 	double * hidden;
 	double * context;
-	double * output;
-	double * target;
-	double * actual;
+	double target;
+	double actual;
 
-	double ** ihWeights;
-	double ** chWeights;
-	double ** hoWeights;
-
-	double * oError;
-	double * hError;
+	double ** wih;
+	double ** wch;
+	double * who;
+	double * woh;
 
 	void prepareTrainingSample(double * sequence, int sequenceSize);
 	void prepareLayers();
 	void prepareWeights();
 	void initWeights();
-	void feedforward();
-	void backpropagation();
+	void feedForward();
+	void backPropagation();
 	double error();
 	double activate(double S);
 	double derivative(double y);
+	double adaptiveStep();
 public:
 	RecurrentNetwork(double * sequence, int sequenceSize, int inCount, int hidCount, double minError);
 	void training();
