@@ -8,7 +8,8 @@ int main() {
 
 	int imageSize = 3;
 	int hiddenSize = 4;
-	int sequenceSize = 6;
+	int sequenceSize = 10;
+	int predictCount = 4;
 	double minError = 0.01;
 
 	double * sequence = FunctionService::getFibonacciSequence(sequenceSize);
@@ -24,6 +25,14 @@ int main() {
 
 	RecurrentNetwork * network = new RecurrentNetwork(sequence, sequenceSize, imageSize, hiddenSize, minError);
 	network->training();
+
+	double * predictedSequence = network->process(predictCount);
+
+	cout << "Predicted sequence: " << endl;
+	for (int i = 0; i < predictCount; i++) {
+		cout << predictedSequence[i] << " ";
+	}
+	cout << endl;
 
 	return 0;
 }

@@ -128,8 +128,8 @@ double RecurrentNetwork::adaptiveStep() {
 }
 
 void RecurrentNetwork::backPropagation() {
-	double a = 0.1; //adaptiveStep();
-	double diff = a * (target - actual);
+	double a = 0.0001; //adaptiveStep();
+	double diff = a * (actual - target);
 
 	for (int i = 0; i < hidCount; i++) {
 		for (int j = 0; j < inCount; j++) {
@@ -183,8 +183,26 @@ double * RecurrentNetwork::process(int predictCount) {
 	int iteration = 0;
 	double * predictedSequence = new double[predictCount];
 
+	for (int i = 0; i < L; i++) {
+		inputs = trainingSample[i];
+
+		feedForward();
+	}
+
+	predictedSequence[0] = actual;
+
 	do {
 		++iteration;
+
+		memcpy(inputs, inputs + 1, (inCount - 1) * sizeof(double));
+		inputs[inCount - 1] = actual;
+
+		feedForward();
+		backPropagation();
+
+		predictedSequence[iteration] = actual;
+
+		cout << "[ " << iteration << " ] actual: " << actual << endl;
 
 
 	} while (iteration < predictCount);
