@@ -8,18 +8,22 @@ int main() {
 
 	int imageSize = 3;
 	int hiddenSize = 4;
-	int sequenceSize = 10;
+	int sequenceSize = 9;
 	int predictCount = 4;
-	double minError = 0.01;
+	double minError = 0.001;
 
-	double * sequence = FunctionService::getFibonacciSequence(sequenceSize);
+//	double * sequence = FunctionService::getFibonacciSequence(sequenceSize);
+//
+//	cout << "Analysing sequence: " << endl;
+//
+//	for (int i = 0; i < sequenceSize; i++) {
+//		cout << sequence[i] << " ";
+//	}
+//	cout << endl;
 
-	cout << "Analysing sequence: " << endl;
-
-	for (int i = 0; i < sequenceSize; i++) {
-		cout << sequence[i] << " ";
-	}
-	cout << endl;
+	double * sequence = new double[sequenceSize]{
+		0, 2, 4, 2, 0, -2, -4, -2, 0
+	};
 
 	cout << "Recurrent Network" << endl;
 

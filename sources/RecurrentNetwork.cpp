@@ -8,7 +8,6 @@ RecurrentNetwork::RecurrentNetwork(double * sequence, int sequenceSize, int inCo
 	this->inCount = inCount;
 	this->hidCount = hidCount;
 	this->minError = minError;
-	this->learnRate = 0.2;
 
 	prepareTrainingSample(sequence, sequenceSize);
 	prepareLayers();
@@ -38,38 +37,47 @@ void RecurrentNetwork::prepareLayers() {
 
 void RecurrentNetwork::prepareWeights() {
 	cout << "- Prepare weights";
+	int incIn = inCount + 1;
+	int incHid = hidCount + 1;
 
-	wih = new double*[inCount];
-	for (int i = 0; i < inCount; i++) {
-		wih[i] = new double[hidCount];
+	wih = new double*[incIn];
+	for (int i = 0; i < incIn; i++) {
+		wih[i] = new double[incHid];
 	}
 
-	wch = new double*[hidCount];
-	for (int i = 0; i < hidCount; i++) {
-		wch[i] = new double[hidCount];
+	wch = new double*[incHid];
+	for (int i = 0; i < incHid; i++) {
+		wch[i] = new double[incHid];
 		context[i] = 0;
 	}
 
-	context[hidCount] = 0;
-	who = new double[hidCount];
-	woh = new double[hidCount];
+	context[incHid] = 0;
+	who = new double[incHid];
+	woh = new double[incHid];
 }
 
 void RecurrentNetwork::initWeights() {
-	for (int i = 0; i < inCount; i++) {
-		for (int j = 0; j < hidCount; j++) {
+	int incIn = inCount + 1;
+	int incHid = hidCount + 1;
+
+	for (int i = 0; i < incIn; i++) {
+		for (int j = 0; j < incHid; j++) {
 			wih[i][j] = FunctionService::getRandom(-1, 1);
 		}
 	}
 
-	for (int i = 0; i < hidCount; i++) {
-		for (int j = 0; j < hidCount; j++) {
+	for (int i = 0; i < incHid; i++) {
+		for (int j = 0; j < incHid; j++) {
 			wch[i][j] = FunctionService::getRandom(-1, 1);
 		}
 	}
 
-	for (int i = 0; i < hidCount; i++) {
-		who[i] = woh[i] = FunctionService::getRandom(-1, 1);
+	for (int i = 0; i < incHid; i++) {
+		who[i] = FunctionService::getRandom(-1, 1);
+	}
+
+	for (int i = 0; i < incHid; i++) {
+		woh[i] = FunctionService::getRandom(-1, 1);
 	}
 
 	cout << " [ DONE ]" << endl;
@@ -77,6 +85,8 @@ void RecurrentNetwork::initWeights() {
 
 void RecurrentNetwork::feedForward() {
 	double S = 0;
+	int incIn = inCount + 1;
+	int incHid = hidCount + 1;
 
 	for (int j = 0; j < hidCount; j++) {
 		S = 0;
@@ -89,7 +99,10 @@ void RecurrentNetwork::feedForward() {
 			S += wch[i][j] * context[i];
 		}
 
-		S += woh[j] * context[hidCount];
+		S += woh[j] * context[incHid];
+
+		// Substruct input bias
+		S -= wih[inCount][j];
 
 		hidden[j] = activate(S);
 	}
@@ -98,12 +111,20 @@ void RecurrentNetwork::feedForward() {
 
 	for (int i = 0; i < hidCount; i++) {
 		S += who[i] * hidden[i];
-		context[i] = hidden[i];
 	}
+
+	// Substruct hidden bias
+	S -= who[hidCount];
 
 	actual = activate(S);
 
-	context[hidCount] = actual;
+	// Copy hidden to context
+	for (int i = 0; i < incHid; i++) {
+		context[i] = hidden[i];
+	}
+
+	// Copy output to context
+	context[incHid] = actual;
 }
 
 double RecurrentNetwork::error() {
@@ -142,6 +163,61 @@ void RecurrentNetwork::backPropagation() {
 
 		who[i] -= diff * hidden[i];
 		woh[i] -= diff * who[i] * derivative(hidden[i]) * context[hidCount];
+		wih[inCount][i] = diff * who[i] * derivative(hidden[i]);
+	}
+
+	who[hidCount] = diff;
+
+	//normalizeWeights();
+}
+
+void RecurrentNetwork::normalizeWeights() {
+	int incIn = inCount + 1;
+	int incHid = hidCount + 1;
+	double s = 0,
+		   s1 = 0;
+
+	for (int i = 0; i < incIn; i++) {
+		s = 0;
+
+		for (int j = 0; j < incHid; j++) {
+			s += pow(wih[i][j], 2);
+		}
+
+		s = sqrt(s);
+
+		for (int j = 0; j < incHid; j++) {
+			wih[i][j] /= s;
+		}
+	}
+
+	for (int i = 0; i < incHid; i++) {
+		s = 0;
+
+		for (int j = 0; j < incHid; j++) {
+			s += pow(wch[i][j], 2);
+		}
+
+		s = sqrt(s);
+
+		for (int j = 0; j < incHid; j++) {
+			wch[i][j] /= s;
+		}
+	}
+
+	s = s1 = 0;
+
+	for (int i = 0; i < incHid; i++) {
+		s += pow(who[i], 2);
+		s1 += pow(woh[i], 2);
+	}
+
+	s = sqrt(s);
+	s1 = sqrt(s1);
+
+	for (int i = 0; i < incHid; i++) {
+		who[i] /= s;
+		woh[i] /= s1;
 	}
 }
 
@@ -198,11 +274,8 @@ double * RecurrentNetwork::process(int predictCount) {
 		inputs[inCount - 1] = actual;
 
 		feedForward();
-		backPropagation();
 
 		predictedSequence[iteration] = actual;
-
-		cout << "[ " << iteration << " ] actual: " << actual << endl;
 
 
 	} while (iteration < predictCount);

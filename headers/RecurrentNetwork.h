@@ -11,9 +11,7 @@ private:
 	int inCount;
 	int hidCount;
 	int L;
-	int size;
 	double minError;
-	double learnRate;
 
 	double ** trainingSample;
 
@@ -34,6 +32,7 @@ private:
 	void initWeights();
 	void feedForward();
 	void backPropagation();
+	void normalizeWeights();
 	double error();
 	double activate(double S);
 	double derivative(double y);
