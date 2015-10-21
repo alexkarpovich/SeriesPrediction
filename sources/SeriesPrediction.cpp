@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 #include "../headers/RecurrentNetwork.h"
 #include "../headers/FunctionService.h"
 
@@ -9,7 +10,7 @@ int main() {
 	int imageSize = 3;
 	int hiddenSize = 4;
 	int sequenceSize = 9;
-	int predictCount = 4;
+	int predictCount = 6;
 	double minError = 0.001;
 
 //	double * sequence = FunctionService::getFibonacciSequence(sequenceSize);
@@ -34,7 +35,7 @@ int main() {
 
 	cout << "Predicted sequence: " << endl;
 	for (int i = 0; i < predictCount; i++) {
-		cout << predictedSequence[i] << " ";
+		cout << round(predictedSequence[i]) << " ";
 	}
 	cout << endl;
 

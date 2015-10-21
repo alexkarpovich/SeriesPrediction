@@ -22,16 +22,18 @@ void RecurrentNetwork::prepareTrainingSample(double * sequence, int sequenceSize
 
 	trainingSample = new double*[L];
 	for (int i = 0; i < L; i++) {
-		trainingSample[i] = new double[inCount];
+		trainingSample[i] = new double[inCount + 1];
 
 		memcpy(trainingSample[i], sequence + i, inCount * sizeof(double));
+		// Add bias
+		trainingSample[i][inCount] = -1;
 	}
 
 	cout << " [ DONE ]" << endl;
 }
 
 void RecurrentNetwork::prepareLayers() {
-	hidden = new double[hidCount];
+	hidden = new double[hidCount + 1];
 	context = new double[hidCount + 1];
 }
 
@@ -42,18 +44,19 @@ void RecurrentNetwork::prepareWeights() {
 
 	wih = new double*[incIn];
 	for (int i = 0; i < incIn; i++) {
-		wih[i] = new double[incHid];
+		wih[i] = new double[hidCount];
 	}
 
 	wch = new double*[incHid];
 	for (int i = 0; i < incHid; i++) {
-		wch[i] = new double[incHid];
+		wch[i] = new double[hidCount];
 		context[i] = 0;
 	}
 
+	hidden[hidCount] = -1;
 	context[incHid] = 0;
 	who = new double[incHid];
-	woh = new double[incHid];
+	woh = new double[hidCount];
 }
 
 void RecurrentNetwork::initWeights() {
@@ -61,13 +64,13 @@ void RecurrentNetwork::initWeights() {
 	int incHid = hidCount + 1;
 
 	for (int i = 0; i < incIn; i++) {
-		for (int j = 0; j < incHid; j++) {
+		for (int j = 0; j < hidCount; j++) {
 			wih[i][j] = FunctionService::getRandom(-1, 1);
 		}
 	}
 
 	for (int i = 0; i < incHid; i++) {
-		for (int j = 0; j < incHid; j++) {
+		for (int j = 0; j < hidCount; j++) {
 			wch[i][j] = FunctionService::getRandom(-1, 1);
 		}
 	}
@@ -76,7 +79,7 @@ void RecurrentNetwork::initWeights() {
 		who[i] = FunctionService::getRandom(-1, 1);
 	}
 
-	for (int i = 0; i < incHid; i++) {
+	for (int i = 0; i < hidCount; i++) {
 		woh[i] = FunctionService::getRandom(-1, 1);
 	}
 
@@ -91,40 +94,34 @@ void RecurrentNetwork::feedForward() {
 	for (int j = 0; j < hidCount; j++) {
 		S = 0;
 
-		for (int i = 0; i < inCount; i++) {
+		for (int i = 0; i < incIn; i++) {
 			S += wih[i][j] * inputs[i];
-		}
+		} // Calculation with input bias
 
 		for (int i = 0; i < hidCount; i++) {
 			S += wch[i][j] * context[i];
 		}
 
-		S += woh[j] * context[incHid];
-
-		// Substruct input bias
-		S -= wih[inCount][j];
+		S += woh[j] * context[hidCount];
 
 		hidden[j] = activate(S);
 	}
 
 	S = 0.0;
 
-	for (int i = 0; i < hidCount; i++) {
+	for (int i = 0; i < incHid; i++) {
 		S += who[i] * hidden[i];
-	}
-
-	// Substruct hidden bias
-	S -= who[hidCount];
+	} // Calculation with hidden bias
 
 	actual = activate(S);
 
 	// Copy hidden to context
-	for (int i = 0; i < incHid; i++) {
+	for (int i = 0; i < hidCount; i++) {
 		context[i] = hidden[i];
 	}
 
 	// Copy output to context
-	context[incHid] = actual;
+	context[hidCount] = actual;
 }
 
 double RecurrentNetwork::error() {
@@ -161,12 +158,12 @@ void RecurrentNetwork::backPropagation() {
 			wch[j][i] -= diff * who[i] * derivative(hidden[i]) * context[j];
 		}
 
-		who[i] -= diff * hidden[i];
 		woh[i] -= diff * who[i] * derivative(hidden[i]) * context[hidCount];
-		wih[inCount][i] = diff * who[i] * derivative(hidden[i]);
+		wih[inCount][i] += diff * who[i] * derivative(hidden[i]);
+		who[i] -= diff * hidden[i];
 	}
 
-	who[hidCount] = diff;
+	who[hidCount] += diff;
 
 	//normalizeWeights();
 }
@@ -252,7 +249,7 @@ void RecurrentNetwork::training() {
 
 		cout << "[ " << iteration << " ] E = " << e << ", actual: " << actual << ", target: " << target << endl;
 
-	} while (e > 0.05);
+	} while (e > minError);
 }
 
 double * RecurrentNetwork::process(int predictCount) {
