@@ -11,7 +11,7 @@ int incHid = 0;
 RecurrentNetwork::RecurrentNetwork(double * sequence, int sequenceSize, int inCount, int hidCount, double minError) {
 	this->inCount = inCount;
 	this->hidCount = hidCount;
-	this->minError = minError;
+	this->minError = activate(minError);
 	incIn = inCount + 1;
 	incHid = hidCount + 1;
 
@@ -28,11 +28,17 @@ void RecurrentNetwork::prepareTrainingSample(double * sequence, int sequenceSize
 
 	L = sequenceSize - inCount + 1;
 
+	double * preparedSequence = new double[sequenceSize];
+
+	for (int i = 0; i < sequenceSize; i++) {
+		preparedSequence[i] = activate(sequence[i]);
+	}
+
 	trainingSample = new double*[L];
 	for (int i = 0; i < L; i++) {
 		trainingSample[i] = new double[inCount + 1];
 
-		memcpy(trainingSample[i], sequence + i, inCount * sizeof(double));
+		memcpy(trainingSample[i], preparedSequence + i, inCount * sizeof(double));
 		trainingSample[i][inCount] = BIAS;
 	}
 
@@ -118,20 +124,6 @@ void RecurrentNetwork::feedForward() {
 	} // Calculate output neuron
 
 	actual = activate(s);
-
-	if (isnan(actual)) {
-		cout << "Inputs: ";
-		for (int i = 0; i <= inCount; i++) {
-			cout << inputs[i] << " ";
-		}
-		cout << endl;
-
-		cout << "Hidden: ";
-		for (int i = 0; i <= hidCount; i++) {
-			cout << hidden[i] << " ";
-		}
-		cout << endl;
-	}
 }
 
 double RecurrentNetwork::error() {
@@ -156,7 +148,7 @@ double RecurrentNetwork::adaptiveStep() {
 }
 
 void RecurrentNetwork::backPropagation() {
-	double a = 0.00005; //adaptiveStep();
+	double a = 0.0005; //adaptiveStep();
 	double diff = a * (actual - target);
 
 	for (int j = 0; j < hidCount; j++) {
@@ -184,8 +176,6 @@ void RecurrentNetwork::backPropagation() {
 }
 
 void RecurrentNetwork::normalizeWeights() {
-	int incIn = inCount + 1;
-	int incHid = hidCount + 1;
 	double s = 0,
 		   s1 = 0;
 
@@ -277,7 +267,7 @@ double * RecurrentNetwork::process(int predictCount) {
 		feedForward();
 	}
 
-	predictedSequence[0] = actual;
+	predictedSequence[0] = sinh(actual);
 
 	do {
 		++iteration;
@@ -287,7 +277,7 @@ double * RecurrentNetwork::process(int predictCount) {
 
 		feedForward();
 
-		predictedSequence[iteration] = actual;
+		predictedSequence[iteration] = sinh(actual);
 
 
 	} while (iteration < predictCount);
